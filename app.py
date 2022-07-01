@@ -43,6 +43,6 @@ def update_markdown(value_slider):
     return title_size
 
 
-# Run the App
+# Run the app
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=False)
