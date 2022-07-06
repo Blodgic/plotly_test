@@ -1,49 +1,57 @@
 # Import packages
-from dash import Dash, dcc, Input, Output
+from dash import Dash, dcc, Input, Output, html
 import dash_bootstrap_components as dbc
+import pandas as pd
+
+# Import data
+url = 'https://raw.githubusercontent.com/open-resources/dash_curriculum/main/tutorial/part2/ch6_files/data_03.txt'
+df3 = pd.read_table(url, sep=';')
+y=2007
+df3 = df3.loc[(df3['year']==y), :]
 
 # Initialise the App
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 # Create app components
-markdown = dcc.Markdown(id='our-markdown', children='My First app', style={'fontSize': 12})
-dropdown = dcc.Dropdown(id='our-dropdown', options=['My First app', 'Welcome to the App', 'This is the title'], value='My First app')
-slider = dcc.Slider(id='our-slider', min=0, max=10, step=1, value=0)
+_header = html.H1(children = 'Population by country in 2007', style = {'textAlign' : 'center'})
+continent_dropdown = dcc.Dropdown(id = 'continent-dropdown', placeholder = 'Select a continent', options = [c for c in df3.continent.unique()])
+country_dropdown = dcc.Dropdown(id = 'country-dropdown', placeholder = 'Select a country')
+_output = html.Div(id = 'final-output')
 
 # App Layout
 app.layout = dbc.Container(
     [
-        dbc.Row([dbc.Col([markdown], width=8)]),
-        dbc.Row(
-            [
-                dbc.Col([dropdown], width=3),
-                dbc.Col([slider], width=9),
-            ]
-        ),
+        dbc.Row([dbc.Col([_header], width=8)]),
+        dbc.Row([dbc.Col([continent_dropdown], width=8)]),
+        dbc.Row([dbc.Col([country_dropdown], width=6)]),
+        dbc.Row([dbc.Col([_output], width=6)])
     ]
 )
 
 
 # Configure callbacks
 @app.callback(
-    Output(component_id='our-markdown', component_property='children'),
-    Input(component_id='our-dropdown', component_property='value')
+    Output(component_id='country-dropdown', component_property='options'),
+    Input(component_id='continent-dropdown', component_property='value')
 )
-def update_markdown(value_dropdown):
-    title = value_dropdown
-    return title
+def country_list(continent_selection):
+    country_options = [c for c in df3.loc[df3['continent']==continent_selection, 'country'].unique()]
+    return country_options
 
 
 @app.callback(
-    Output(component_id='our-markdown', component_property='style'),
-    Input(component_id='our-slider', component_property='value')
+    Output(component_id='final-output', component_property='children'),
+    Input(component_id='country-dropdown', component_property='value'),
+prevent_initial_call=True
 )
-def update_markdown(value_slider):
-    title_size = {'fontSize': 12+2*value_slider}
-    return title_size
+def pop_calculator(country_selection):
+    pop_value = df3.loc[df3['country']==country_selection]
+    pop_value = pop_value.loc[:, 'pop'].values[0]  # select only first value in pop column
+    output = ('The population in '+country_selection+' was: '+pop_value.astype(str))
+    return output
 
-
+# Run the App
 # Run the app
 if __name__ == '__main__':
     app.run_server(debug=False)
