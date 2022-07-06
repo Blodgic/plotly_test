@@ -1,1 +1,1 @@
-web: gunicorn chap5-app:server
+web: gunicorn chap5-myapp:server
